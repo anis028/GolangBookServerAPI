@@ -7,8 +7,10 @@ import (
 	"log"
 	"net/http"
 	"strconv"
+	"sync"
 )
 
+var mutex sync.Mutex
 
 // returns all all_books in the list
 func GetAllBooks(w http.ResponseWriter, r *http.Request){
@@ -42,6 +44,8 @@ func CreateBook() http.Handler {
 		w.Header().Set("Content-Type", "application/json")
 		var book library.Book
 		_ = json.NewDecoder(r.Body).Decode(&book)
+		mutex.Lock()
+		defer mutex.Unlock()
 		book.ID = len(library.AllBooks) + 1
 		library.AllBooks = append(library.AllBooks, book)
 		json.NewEncoder(w).Encode(book)
@@ -55,11 +59,16 @@ func UpdateBook() http.Handler {
 		search_id, _ := strconv.Atoi(mux.Vars(r)["id"])
 		for index, item := range library.AllBooks {
 			if item.ID == search_id {
-				library.AllBooks = append(library.AllBooks[:index], library.AllBooks[index+1:]...)
+
+				mutex.Lock()
+				defer mutex.Unlock()
+				//library.AllBooks = append(library.AllBooks[:index], library.AllBooks[index+1:]...)
 				var book library.Book
 				_ = json.NewDecoder(r.Body).Decode(&book)
 				book.ID = search_id
-				library.AllBooks = append(library.AllBooks, book)
+				//library.AllBooks = append(library.AllBooks, book)
+
+				library.AllBooks[index] = book
 				_ = json.NewEncoder(w).Encode(book)
 				return
 			}
@@ -74,6 +83,8 @@ func DeleteBook() http.Handler {
 		searchId, _ := strconv.Atoi(mux.Vars(r)["id"])
 		for index, item := range library.AllBooks {
 			if item.ID == searchId {
+				mutex.Lock()
+				defer mutex.Unlock()
 				library.AllBooks = append(library.AllBooks[:index], library.AllBooks[index+1:]...)
 				break
 			}

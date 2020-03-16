@@ -16,14 +16,18 @@ func main() {
 		Methods("GET")
 	r.HandleFunc("/books/{id}", book_operations.GetSingleBook).
 		Methods("GET")
+	r.HandleFunc("/login", library.Login).
+		Methods("GET")
+	//r.HandleFunc("/token", library.GenerateToken).
+	//	Methods("GET")
 	//r.HandleFunc("/books", book_operations.CreateBook).Methods("POST")
-	r.Handle("/books/{id}", library.AuthMiddleware(book_operations.CreateBook())).
+	r.Handle("/books", library.IsAuthorized(book_operations.CreateBook())).
 		Methods("POST")
 	//r.HandleFunc("/books/{id}", book_operations.UpdateBook).Methods("PUT")
-	r.Handle("/books/{id}", library.AuthMiddleware(book_operations.UpdateBook())).
+	r.Handle("/books/{id}", library.IsAuthorized(book_operations.UpdateBook())).
 		Methods("PUT")
 	//r.HandleFunc("/books/{id}", book_operations.DeleteBook).Methods("DELETE")
-	r.Handle("/books/{id}", library.AuthMiddleware(book_operations.DeleteBook())).
+	r.Handle("/books/{id}", library.IsAuthorized(book_operations.DeleteBook())).
 		Methods("DELETE")
 	http.Handle("/", r)
 
